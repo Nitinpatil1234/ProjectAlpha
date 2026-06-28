@@ -21,7 +21,10 @@ def update_drawdown(balance, max_balance, max_drawdown):
 
 def run_backtest():
 
-    candles = get_candles("BTCUSDT")
+    candles = get_candles(
+    "BTCUSDT",
+    limit=10000
+)
 
     wins = 0
     losses = 0
@@ -77,7 +80,7 @@ def run_backtest():
                 if high_price >= take_profit:
 
                     wins += 1
-                    balance *= 1.0125
+                    balance *= 1.0105
 
                     max_balance, max_drawdown = update_drawdown(
                         balance,
@@ -91,7 +94,7 @@ def run_backtest():
                 elif low_price <= stop_loss:
 
                     losses += 1
-                    balance *= 0.99
+                    balance *= 0.988
 
                     max_balance, max_drawdown = update_drawdown(
                         balance,
