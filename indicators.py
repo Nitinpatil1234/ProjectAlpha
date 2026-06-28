@@ -1,5 +1,6 @@
 import pandas as pd
 from ta.volatility import AverageTrueRange
+from ta.trend import ADXIndicator
 
 
 def calculate_rsi(close_prices, period=14):
@@ -58,3 +59,26 @@ def calculate_atr(candles, period=14):
     )
 
     return atr.average_true_range().iloc[-1]
+
+def calculate_adx(candles, period=14):
+
+    import pandas as pd
+
+    highs = [float(candle[2]) for candle in candles]
+    lows = [float(candle[3]) for candle in candles]
+    closes = [float(candle[4]) for candle in candles]
+
+    df = pd.DataFrame({
+        "high": highs,
+        "low": lows,
+        "close": closes
+    })
+
+    adx = ADXIndicator(
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        window=period
+    )
+
+    return adx.adx().iloc[-1]

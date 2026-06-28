@@ -1,5 +1,10 @@
 from market import get_candles, get_current_price
-from indicators import calculate_rsi, calculate_ema, calculate_atr
+from indicators import (
+    calculate_rsi,
+    calculate_ema,
+    calculate_atr,
+    calculate_adx
+)
 from strategy import get_signal
 from risk import calculate_position_size
 from logger import log_signal
@@ -10,6 +15,10 @@ from orders import (
     get_trade,
     check_trade,
     close_trade
+)
+from volume import (
+    calculate_average_volume,
+    get_current_volume
 )
 
 
@@ -27,6 +36,9 @@ def run_bot():
     ema50 = calculate_ema(close_prices, 50)
     ema200 = calculate_ema(close_prices, 200)
     atr = calculate_atr(candles)
+    adx = calculate_adx(candles)
+    average_volume = calculate_average_volume(candles)
+    current_volume = get_current_volume(candles)
 
     # Determine Trend
     if ema50 > ema200:
@@ -36,6 +48,11 @@ def run_bot():
     else:
         trend = "SIDEWAYS"
 
+
+    print(f"ADX           : {adx:.2f}")
+    print(f"Avg Volume    : {average_volume:.2f}")
+    print(f"Current Vol   : {current_volume:.2f}")
+
     # Generate Signal
     signal = get_signal(
         rsi,
@@ -43,6 +60,16 @@ def run_bot():
         ema50,
         ema200
     )
+
+    # ADX Filter
+    if adx <= 25:
+        signal = "HOLD"
+        print("ADX Filter: Weak trend detected.")
+
+    # Volume Filter
+    if current_volume < (average_volume * 0.8):
+        signal = "HOLD"
+        print("Volume Filter: Low volume detected.")
 
     balance = 10000
     risk_percent = 1
@@ -119,16 +146,16 @@ def run_bot():
         result = check_trade(current_price)
 
         if result:
-         print("\n================================")
-         print(f"TRADE CLOSED : {result}")
-         print("================================")
+            print("\n================================")
+            print(f"TRADE CLOSED : {result}")
+            print("================================")
 
-        log_trade_result(
-            trade["signal"],
-            trade["entry"],
-            current_price,
-            result,
-            trade["position_size"]
-        )
+            log_trade_result(
+                trade["signal"],
+                trade["entry"],
+                current_price,
+                result,
+                trade["position_size"]
+            )
 
-        close_trade()
+            close_trade()

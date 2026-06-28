@@ -1,6 +1,6 @@
 from exchange import client
 
-def get_candles(symbol="BTCUSDT", interval=client.KLINE_INTERVAL_5MINUTE, limit=200):
+def get_candles(symbol="BTCUSDT", interval=client.KLINE_INTERVAL_5MINUTE, limit=1000):
     candles = client.get_klines(
         symbol=symbol,
         interval=interval,
