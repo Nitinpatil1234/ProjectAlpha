@@ -1,14 +1,22 @@
 from market import get_candles
-from indicators import (
-    calculate_rsi,
-    calculate_ema,
-    calculate_adx
-)
+from indicators import calculate_rsi, calculate_ema
 from strategy import get_signal
-from volume import (
-    calculate_average_volume,
-    get_current_volume
-)
+
+
+def update_drawdown(balance, max_balance, max_drawdown):
+
+    if balance > max_balance:
+        max_balance = balance
+
+    drawdown = (
+        (max_balance - balance)
+        / max_balance
+    ) * 100
+
+    if drawdown > max_drawdown:
+        max_drawdown = drawdown
+
+    return max_balance, max_drawdown
 
 
 def run_backtest():
@@ -19,6 +27,12 @@ def run_backtest():
     losses = 0
     expired = 0
     total_signals = 0
+
+    starting_balance = 100.0
+    balance = 100.0
+
+    max_balance = balance
+    max_drawdown = 0
 
     for i in range(200, len(candles) - 30):
 
@@ -33,30 +47,12 @@ def run_backtest():
         ema50 = calculate_ema(close_prices, 50)
         ema200 = calculate_ema(close_prices, 200)
 
-        adx = calculate_adx(candles[:i])
-
-        average_volume = calculate_average_volume(
-            candles[:i]
-        )
-
-        current_volume = get_current_volume(
-            candles[:i]
-        )
-
         signal = get_signal(
             rsi,
             current_price,
             ema50,
             ema200
         )
-
-        # ADX Filter
-        # if adx <= 25:
-        #     signal = "HOLD"
-
-        # Volume Filter
-        # if current_volume < (average_volume * 0.8):
-        #     signal = "HOLD"
 
         if signal == "HOLD":
             continue
@@ -79,12 +75,30 @@ def run_backtest():
                 low_price = float(candle[3])
 
                 if high_price >= take_profit:
+
                     wins += 1
+                    balance *= 1.0125
+
+                    max_balance, max_drawdown = update_drawdown(
+                        balance,
+                        max_balance,
+                        max_drawdown
+                    )
+
                     trade_closed = True
                     break
 
                 elif low_price <= stop_loss:
+
                     losses += 1
+                    balance *= 0.99
+
+                    max_balance, max_drawdown = update_drawdown(
+                        balance,
+                        max_balance,
+                        max_drawdown
+                    )
+
                     trade_closed = True
                     break
 
@@ -105,12 +119,30 @@ def run_backtest():
                 low_price = float(candle[3])
 
                 if low_price <= take_profit:
+
                     wins += 1
+                    balance *= 1.0125
+
+                    max_balance, max_drawdown = update_drawdown(
+                        balance,
+                        max_balance,
+                        max_drawdown
+                    )
+
                     trade_closed = True
                     break
 
                 elif high_price >= stop_loss:
+
                     losses += 1
+                    balance *= 0.99
+
+                    max_balance, max_drawdown = update_drawdown(
+                        balance,
+                        max_balance,
+                        max_drawdown
+                    )
+
                     trade_closed = True
                     break
 
@@ -124,6 +156,11 @@ def run_backtest():
     else:
         win_rate = 0
 
+    profit_percent = (
+        (balance - starting_balance)
+        / starting_balance
+    ) * 100
+
     print("\n========== BACKTEST ==========")
     print(f"Total Candles : {len(candles)}")
     print(f"Signals       : {total_signals}")
@@ -132,6 +169,11 @@ def run_backtest():
     print(f"Expired       : {expired}")
     print(f"Total Trades  : {total_trades}")
     print(f"Win Rate      : {win_rate:.2f}%")
+    print("--------------------------------")
+    print(f"Start Balance : ${starting_balance:.2f}")
+    print(f"End Balance   : ${balance:.2f}")
+    print(f"Profit %      : {profit_percent:.2f}%")
+    print(f"Max Drawdown  : {max_drawdown:.2f}%")
     print("==============================")
 
 
