@@ -1,0 +1,4 @@
+Time,Signal,Entry,Exit,Result,Position Size,PnL
+2026-06-28,BUY,100,110,WIN,1,10
+2026-06-28,BUY,100,95,LOSS,1,-5
+2026-06-28,SELL,120,110,WIN,1,10
